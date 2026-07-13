@@ -1,23 +1,10 @@
-data "aws_vpcs" "this" {
-  tags = {
-    purpose = "vega"
-  }
-}
-
-data "aws_subnets" "this" {
-  tags = {
-    purpose = "vega"
-    Type    = "Private"
-  }
-
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpcs.this.ids[0]]
-  }
-}
 
 module "this" {
-  source             = "../../"
-  private_subnet_ids = data.aws_subnets.this.ids
-  vpc_id             = data.aws_vpcs.this.ids[0]
+  source                    = "https://github.com/champ-oss/terraform-aws-vpc.git?ref=v1.0.63-722aa5b"
+  name                      = "network-firewall-vpc"
+  cidr_block                = "10.1.0.0/16"
+  availability_zones_count  = 1
+  tags = {
+    purpose = "network-firewall-testing"
+  }
 }
