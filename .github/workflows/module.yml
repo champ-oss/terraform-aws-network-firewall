@@ -93,9 +93,9 @@ jobs:
             export $key=$value
           done
           if [ -f test.sh ]; then bash test.sh; fi
-      - name: destroy
-        if: always()
-        run: terraform destroy -auto-approve
+     #- name: destroy
+     #   if: always()
+     #   run: terraform destroy -auto-approve
   module:
     if: ${{ always() }}
     runs-on: ubuntu-latest
