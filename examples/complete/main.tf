@@ -105,7 +105,7 @@ resource "aws_route_table" "ec2-private-route-table" {
  
   route {
     cidr_block      = "0.0.0.0/0"
-    vpc_endpoint_id = aws_networkfirewall_firewall.network-firewall.firewall_status[0].sync_states[0].attachment[0].endpoint_id
+    vpc_endpoint_id = tolist(aws_networkfirewall_firewall.network-firewall.firewall_status[0].sync_states)[0].attachment[0].endpoint_id
   }
  
   tags = {
