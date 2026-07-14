@@ -70,16 +70,16 @@ resource "aws_networkfirewall_firewall" "network-firewall" {
 }
 
 ################ EC2 Instances ######################
-#data "aws_availability_zones" "availability_zones" {
-#  state = "available"
-#}
+data "aws_availability_zones" "availability_zones" {
+  state = "available"
+}
 
 
 #Create private subnet for ec2 instances
 resource "aws_subnet" "ec2-private-subnet" {
   vpc_id            = module.network-fw-vpc.vpc_id
   cidr_block        = "10.0.1.0/24"
-  availability_zone = module.network-fw-vpc.aws_availability_zones[0]
+  availability_zone = data.aws_availability_zones.availability_zones.names[0]
   tags = {
     Name = "ec2-private-subnet"
   }
