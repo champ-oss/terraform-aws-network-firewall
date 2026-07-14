@@ -52,14 +52,6 @@ resource "aws_networkfirewall_firewall_policy" "network-firewall-policy" {
   }
 }
 
-#Retrieve private subnet from aws account
-#data "aws_subnets" "private" {
-#  tags = {
-#    purpose = "network-firewall-testing"
-#    Type    = "Private"
-#  }
-#}
-
 #Create Network Firewall
 resource "aws_networkfirewall_firewall" "network-firewall" {
   name              = "network-firewall"
@@ -88,16 +80,6 @@ resource "aws_subnet" "ec2-private-subnet" {
     Name = "ec2-private-subnet"
   }
 }
-
-#Get nat gateway from aws account
-#data "aws_nat_gateway" "nat_gateway" {
-#  filter {
-#    name   = "tag:Name"
-#    values = ["network-firewall-vpc-0"]
-#  }
-#}
-
-
 
 #Create route table for private subnet
 resource "aws_route_table" "ec2-private-route-table" {
@@ -154,10 +136,10 @@ resource "aws_iam_instance_profile" "ssm_ec2_profile" {
 
 #Create ec2 instance in ec2-private subnet
 resource "aws_instance" "ec2_instance" {
-  ami           = "aami-04ea4e8270c27626c" # Replace with a valid AMI ID
-  instance_type = "t2.micro"
-  subnet_id     = aws_subnet.ec2-private-subnet.id
-  iam_instance_profile   = aws_iam_instance_profile.ssm_ec2_profile.name
+  ami                   = "ami-04ea4e8270c27626c" 
+  instance_type         = "t2.micro"
+  subnet_id             = aws_subnet.ec2-private-subnet.id
+  iam_instance_profile  = aws_iam_instance_profile.ssm_ec2_profile.name
 
   tags = {
     Name = "ec2-instance"
