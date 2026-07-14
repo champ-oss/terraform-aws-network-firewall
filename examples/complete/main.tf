@@ -19,6 +19,10 @@ resource "aws_networkfirewall_rule_group" "domain-list-stateful-rule-group" {
   capacity    = 100
   type        = "STATEFUL"
   rule_group {
+    
+    stateful_rule_options {
+      rule_order = "STRICT_ORDER" # Critical: Must match the policy
+    }
     rules_source {
       rules_source_list {
         generated_rules_type = "DENYLIST"
@@ -78,7 +82,7 @@ data "aws_availability_zones" "availability_zones" {
 #Create private subnet for ec2 instances
 resource "aws_subnet" "ec2-private-subnet" {
   vpc_id            = module.network-fw-vpc.vpc_id
-  cidr_block        = "10.0.1.0/24"
+  cidr_block        = "10.0.3.0/24"
   availability_zone = data.aws_availability_zones.availability_zones.names[0]
   tags = {
     Name = "ec2-private-subnet"
@@ -106,3 +110,4 @@ resource "aws_route_table" "ec2-private-route-table" {
     Name = "ec2-private-route-table"
   }
 }
+
