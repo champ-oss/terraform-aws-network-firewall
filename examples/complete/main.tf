@@ -2,12 +2,98 @@ provider "aws" {
   region = "us-east-2"
 }
 
-module "networkd-fw-vpc" {
+module "network-fw-vpc" {
   source                    = "github.com/champ-oss/terraform-aws-vpc.git?ref=v1.0.63-722aa5b"
   name                      = "network-firewall-vpc"
   cidr_block                = "10.0.0.0"
   availability_zones_count  = 1
   tags = {
     purpose = "network-firewall-testing"
+  }
+}
+
+################ Network Firewall ######################
+#create network firewall stateful rule group
+resource "aws_networkfirewall_rule_group" "domain-list-stateful-rule-group" {
+  name        = "domain-list-stateful-rule-group"
+  capacity    = 100
+  type        = "STATEFUL"
+  rule_group {
+    rules_source {
+      rules_source_list {
+        generated_rules_type = "DENYLIST"
+        target_types         = ["HTTP_HOST"]
+        targets              = ["google.com"]
+      }
+    }
+  }
+}
+
+#Create network firewall policy for above stateful rule group
+resource "aws_networkfirewall_firewall_policy" "network-firewall-policy" {
+  name        = "network-firewall-policy"
+  description = "Network firewall policy for the network firewall"
+  firewall_policy {
+    stateless_fragment_default_actions = ["aws:forward_to_sfe"]
+    stateless_default_actions          = ["aws:forward_to_sfe"]
+
+    stateful_engine_options {
+      rule_order = "STRICT_ORDER"
+    }
+
+    stateful_rule_group_reference {
+      priority     = 1
+      resource_arn = aws_networkfirewall_rule_group.domain-list-stateful-rule-group.arn
+    }
+  }
+}
+
+#Retrieve private subnet from aws account
+data "aws_subnets" "private" {
+  tags = {
+    purpose = "network-firewall-testing"
+    Type    = "Private"
+  }
+}
+
+#Create Network Firewall
+resource "aws_networkfirewall_firewall" "network-firewall" {
+  name              = "network-firewall"
+  vpc_id            = module.network-fw-vpc.vpc_id
+  subnet_mapping {
+    subnet_id = data.aws_subnets.private.ids[0]
+  }
+  firewall_policy_arn = aws_networkfirewall_firewall_policy.network-firewall-policy.arn
+  tags = {
+    Name = "network-firewall"
+  }
+}
+
+################ EC2 Instances ######################
+#Create private subnet for ec2 instances
+resource "aws_subnet" "ec2-private-subnet" {
+  vpc_id            = module.network-fw-vpc.vpc_id
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = module.network-fw-vpc.availability_zones[0]
+  tags = {
+    Name = "ec2-private-subnet"
+  }
+}
+
+
+
+
+
+#Create route table for private subnet
+resource "aws_route_table" "ec2-private-route-table" {
+  vpc_id = module.network-fw-vpc.vpc_id
+
+  route {
+    cidr_block = "10.0.1.0/24"
+    gateway_id = module.network-fw-vpc.nat_gateway_id
+  }
+
+  tags = {
+    Name = "ec2-private-route-table"
   }
 }
