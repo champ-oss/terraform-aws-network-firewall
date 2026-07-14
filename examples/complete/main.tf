@@ -53,19 +53,19 @@ resource "aws_networkfirewall_firewall_policy" "network-firewall-policy" {
 }
 
 #Retrieve private subnet from aws account
-data "aws_subnets" "private" {
-  tags = {
-    purpose = "network-firewall-testing"
-    Type    = "Private"
-  }
-}
+#data "aws_subnets" "private" {
+#  tags = {
+#    purpose = "network-firewall-testing"
+#    Type    = "Private"
+#  }
+#}
 
 #Create Network Firewall
 resource "aws_networkfirewall_firewall" "network-firewall" {
   name              = "network-firewall"
   vpc_id            = module.network-fw-vpc.vpc_id
   subnet_mapping {
-    subnet_id = data.aws_subnets.private.ids[0]
+    subnet_id = module.network-fw-vpc.private_subnets_ids[0]
   }
   firewall_policy_arn = aws_networkfirewall_firewall_policy.network-firewall-policy.arn
   tags = {
@@ -90,24 +90,28 @@ resource "aws_subnet" "ec2-private-subnet" {
 }
 
 #Get nat gateway from aws account
-data "aws_nat_gateway" "nat_gateway" {
-  filter {
-    name   = "tag:Name"
-    values = ["network-firewall-vpc-0"]
-  }
-}
+#data "aws_nat_gateway" "nat_gateway" {
+#  filter {
+#    name   = "tag:Name"
+#    values = ["network-firewall-vpc-0"]
+#  }
+#}
 
 #Create route table for private subnet
 resource "aws_route_table" "ec2-private-route-table" {
   vpc_id = module.network-fw-vpc.vpc_id
 
   route {
-    cidr_block = "10.0.1.0/24"
-    gateway_id = data.aws_nat_gateway.nat_gateway.id
+    cidr_block = "10.0.3.0/24"
+    gateway_id = "local"
   }
 
+#  route {
+#    cidr_block = "10.0.3.0/24"
+#    gateway_id = module.network-fw-vpc.nat_public_ips
+#  }
+  
   tags = {
     Name = "ec2-private-route-table"
   }
 }
-
