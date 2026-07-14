@@ -117,3 +117,49 @@ resource "aws_route_table_association" "ec2-private-route-table-association" {
   subnet_id      = aws_subnet.ec2-private-subnet.id
   route_table_id = aws_route_table.ec2-private-route-table.id
 }
+
+#Create the IAM Role trusted by EC2
+resource "aws_iam_role" "ssm_ec2_role" {
+  name = "ssm-ec2-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "ssm-ec2-role"
+  }
+}
+
+#Attach the SSM managed policy to the role
+resource "aws_iam_role_policy_attachment" "ssm_managed_instance_core" {
+  role       = aws_iam_role.ssm_ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+#Create the IAM Instance Profile
+resource "aws_iam_instance_profile" "ssm_ec2_profile" {
+  name = "ssm-ec2-profile"
+  role = aws_iam_role.ssm_ec2_role.name
+}
+
+#Create ec2 instance in ec2-private subnet
+resource "aws_instance" "ec2_instance" {
+  ami           = "aami-04ea4e8270c27626c" # Replace with a valid AMI ID
+  instance_type = "t2.micro"
+  subnet_id     = aws_subnet.ec2-private-subnet.id
+  iam_instance_profile   = aws_iam_instance_profile.ssm_ec2_profile.name
+
+  tags = {
+    Name = "ec2-instance"
+  }
+}
