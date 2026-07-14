@@ -70,19 +70,28 @@ resource "aws_networkfirewall_firewall" "network-firewall" {
 }
 
 ################ EC2 Instances ######################
+#data "aws_availability_zones" "availability_zones" {
+#  state = "available"
+#}
+
+
 #Create private subnet for ec2 instances
 resource "aws_subnet" "ec2-private-subnet" {
   vpc_id            = module.network-fw-vpc.vpc_id
   cidr_block        = "10.0.1.0/24"
-  availability_zone = module.network-fw-vpc.availability_zones[0]
+  availability_zone = module.network-fw-vpc.aws_availability_zones[0]
   tags = {
     Name = "ec2-private-subnet"
   }
 }
 
-
-
-
+#Get nat gateway from aws account
+data "aws_nat_gateway" "nat_gateway" {
+  filter {
+    name   = "tag:Name"
+    values = ["network-firewall-vpc-0"]
+  }
+}
 
 #Create route table for private subnet
 resource "aws_route_table" "ec2-private-route-table" {
@@ -90,7 +99,7 @@ resource "aws_route_table" "ec2-private-route-table" {
 
   route {
     cidr_block = "10.0.1.0/24"
-    gateway_id = module.network-fw-vpc.nat_gateway_id
+    gateway_id = data.aws_nat_gateway.nat_gateway.id
   }
 
   tags = {
