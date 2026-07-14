@@ -70,7 +70,6 @@ data "aws_availability_zones" "availability_zones" {
   state = "available"
 }
 
-
 #Create private subnet for ec2 instances
 resource "aws_subnet" "ec2-private-subnet" {
   vpc_id            = module.network-fw-vpc.vpc_id
