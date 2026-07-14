@@ -97,10 +97,7 @@ resource "aws_subnet" "ec2-private-subnet" {
 #  }
 #}
 
-locals {
-  # Extract endpoint IDs from the firewall status
-  firewall_endpoints = aws_networkfirewall_firewall.network-firewall.firewall_status[0].sync_states[*].attachment[*].endpoint_id
-}
+
 
 #Create route table for private subnet
 resource "aws_route_table" "ec2-private-route-table" {
@@ -108,7 +105,7 @@ resource "aws_route_table" "ec2-private-route-table" {
  
   route {
     cidr_block      = "0.0.0.0/0"
-    vpc_endpoint_id = local.firewall_endpoints[count.index]
+    vpc_endpoint_id = aws_networkfirewall_firewall.network-firewall.firewall_status[0].sync_states[0].attachment[0].endpoint_id
   }
  
   tags = {
