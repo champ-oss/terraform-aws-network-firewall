@@ -82,7 +82,7 @@ data "aws_availability_zones" "availability_zones" {
 #Create private subnet for ec2 instances
 resource "aws_subnet" "ec2-private-subnet" {
   vpc_id            = module.network-fw-vpc.vpc_id
-  cidr_block        = "10.0.10.0/24"
+  cidr_block        = "10.0.64.0/20"
   availability_zone = data.aws_availability_zones.availability_zones.names[0]
   tags = {
     Name = "ec2-private-subnet"
