@@ -82,7 +82,7 @@ data "aws_availability_zones" "availability_zones" {
 #Create private subnet for ec2 instances
 resource "aws_subnet" "ec2-private-subnet" {
   vpc_id            = module.network-fw-vpc.vpc_id
-  cidr_block        = "10.0.3.0/24"
+  cidr_block        = "10.0.5.0/24"
   availability_zone = data.aws_availability_zones.availability_zones.names[0]
   tags = {
     Name = "ec2-private-subnet"
@@ -100,18 +100,18 @@ resource "aws_subnet" "ec2-private-subnet" {
 #Create route table for private subnet
 resource "aws_route_table" "ec2-private-route-table" {
   vpc_id = module.network-fw-vpc.vpc_id
-
+ 
   route {
-    cidr_block = "10.0.3.0/24"
-    gateway_id = "local"
+    cidr_block      = "0.0.0.0/0"
+    vpc_endpoint_id = aws_networkfirewall_firewall.network-firewall.firewall_status[0].sync_states[0].attachment[0].endpoint_id
   }
-
-#  route {
-#    cidr_block = "10.0.3.0/24"
-#    gateway_id = module.network-fw-vpc.nat_public_ips
-#  }
-  
+ 
   tags = {
     Name = "ec2-private-route-table"
   }
+}
+
+resource "aws_route_table_association" "ec2-private-route-table-association" {
+  subnet_id      = aws_subnet.ec2-private-subnet.id
+  route_table_id = aws_route_table.ec2-private-route-table.id
 }
