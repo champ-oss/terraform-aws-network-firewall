@@ -108,7 +108,7 @@ resource "aws_route_table" "ec2-private-route-table" {
  
   route {
     cidr_block      = "0.0.0.0/0"
-    vpc_endpoint_id = local.firewall_endpoints
+    vpc_endpoint_id = local.firewall_endpoints[count.index]
   }
  
   tags = {
