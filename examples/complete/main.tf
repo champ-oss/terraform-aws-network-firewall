@@ -40,8 +40,8 @@ resource "aws_networkfirewall_rule_group" "domain-list-stateful-rule-group" {
     }
     rules_source {
       rules_source_list {
-        generated_rules_type = "DENYLIST"
-        target_types         = ["HTTP_HOST"]
+        generated_rules_type = "ALLOWLIST"
+        target_types         = ["HTTP_HOST", "TLS_SNI"]
         targets              = [".google.com"]
       }
     }
@@ -60,7 +60,7 @@ resource "aws_networkfirewall_firewall_policy" "network-firewall-policy" {
       rule_order = "STRICT_ORDER"
     }
 
-    stateful_default_actions = 
+    stateful_default_actions = ["aws:alert_established", "aws:drop_established"]
 
     stateful_rule_group_reference {
       priority     = 1
@@ -79,6 +79,52 @@ resource "aws_networkfirewall_firewall" "network-firewall" {
   firewall_policy_arn = aws_networkfirewall_firewall_policy.network-firewall-policy.arn
   tags = {
     Name = "network-firewall"
+  }
+}
+
+#Create CloudWatch Log Group for network firewall
+resource "aws_cloudwatch_log_group" "network-firewall-flow-log-group" {
+  name              = "/aws/networkfirewall/flow-logs"
+  retention_in_days = 1
+
+  tags = {
+    Name = "network-firewall-log-group"
+  }
+}
+
+#Create CloudWatch Log Group for network firewall alert logs
+resource "aws_cloudwatch_log_group" "network-firewall-alert-log-group" {
+  name              = "/aws/networkfirewall/alert-logs"
+  retention_in_days = 1
+
+  tags = {
+    Name = "network-firewall-alert-logs"
+  }
+}
+
+#enable Cloudwatch logging for network firewall
+#enable Cloudwatch logging for network firewall
+resource "aws_networkfirewall_logging_configuration" "network-firewall-logging" {
+  firewall_arn            = aws_networkfirewall_firewall.network-firewall.arn
+  logging_configuration {
+    log_destination_config {
+      log_type             = "FLOW"
+      log_destination_type = "CloudWatchLogs"
+      log_destination = {
+        cloudwatch_logs_log_group = {
+          log_group = aws_cloudwatch_log_group.network-firewall-flow-log-group.name
+        }
+      }
+    }
+    log_destination_config {
+      log_type             = "ALERT"
+      log_destination_type = "CloudWatchLogs"
+      log_destination = {
+        cloudwatch_logs_log_group = {
+          log_group = aws_cloudwatch_log_group.network-firewall-alert-log-group.name
+        }
+      }
+    }
   }
 }
 
