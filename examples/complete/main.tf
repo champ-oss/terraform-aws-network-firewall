@@ -2,6 +2,7 @@ provider "aws" {
   region = "us-east-2"
 }
 
+## VPC module
 module "network-fw-vpc" {
   source                    = "github.com/champ-oss/terraform-aws-vpc.git?ref=v1.0.63-722aa5b"
   name                      = "network-firewall-vpc"
@@ -10,6 +11,20 @@ module "network-fw-vpc" {
   tags = {
     purpose = "network-firewall-testing"
   }
+}
+
+
+#DNS resolver module
+module "route53_resolver_dns_firewall" {
+  source = "github.com/champ-oss/terraform-aws-route53-resolver-dns-firewall.git?ref=v1.0.1-fa92c88"
+
+  enabled = true
+
+  git    = "shared"
+  vpc_id = module.network-fw-vpc.vpc_id
+
+  enable_query_logging = true
+
 }
 
 ################ Network Firewall ######################
@@ -27,7 +42,7 @@ resource "aws_networkfirewall_rule_group" "domain-list-stateful-rule-group" {
       rules_source_list {
         generated_rules_type = "DENYLIST"
         target_types         = ["HTTP_HOST"]
-        targets              = ["google.com"]
+        targets              = [".google.com"]
       }
     }
   }
@@ -44,6 +59,8 @@ resource "aws_networkfirewall_firewall_policy" "network-firewall-policy" {
     stateful_engine_options {
       rule_order = "STRICT_ORDER"
     }
+
+    stateful_default_actions = 
 
     stateful_rule_group_reference {
       priority     = 1
