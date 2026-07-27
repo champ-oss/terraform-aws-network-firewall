@@ -111,18 +111,14 @@ resource "aws_networkfirewall_logging_configuration" "network-firewall-logging" 
       log_type             = "FLOW"
       log_destination_type = "CloudWatchLogs"
       log_destination = {
-        cloudwatch_logs_log_group = {
-          log_group = aws_cloudwatch_log_group.network-firewall-flow-log-group.name
-        }
+        cloudwatch_logs_log_group = aws_cloudwatch_log_group.network-firewall-flow-log-group.name
       }
     }
     log_destination_config {
       log_type             = "ALERT"
       log_destination_type = "CloudWatchLogs"
       log_destination = {
-        cloudwatch_logs_log_group = {
-          log_group = aws_cloudwatch_log_group.network-firewall-alert-log-group.name
-        }
+        cloudwatch_logs_log_group = aws_cloudwatch_log_group.network-firewall-alert-log-group.name
       }
     }
   }
